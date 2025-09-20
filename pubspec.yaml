@@ -1,0 +1,30 @@
+name: driver_tracker_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  lottie: ^3.3.1
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.5.3
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.4
+  cloud_firestore: ^4.14.0
+  get: ^4.6.6
+  provider: ^6.1.5+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/default/
+    - assets/animations/

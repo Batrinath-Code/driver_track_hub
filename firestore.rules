@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isManager() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
+    }
+    
+    function isDriver() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'driver';
+    }
+    
+    function isDriverOfVehicle(vehicleData) {
+      return isDriver() && vehicleData.currentDriverId == request.auth.uid;
+    }
+
+    function isUserOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin() || isUserOwner(userId);
+      allow delete: if isAdmin();
+    }
+
+    // Vehicles Collection
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated();
+      allow create, delete: if isAdmin() || isManager();
+      allow update: if isAdmin() || isManager() || 
+        (isDriver() && (
+          isDriverOfVehicle(resource.data) ||
+          (resource.data.status == 'IDLE' && 
+           request.resource.data.currentDriverId == request.auth.uid)
+        ));
+    }
+
+    // Rides Collection (separate collection for better querying)
+    match /rides/{rideId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || isManager() || 
+        (isDriver() && request.resource.data.driverId == request.auth.uid);
+      allow update: if isAdmin() || isManager() ||
+        (isDriver() && resource.data.driverId == request.auth.uid && 
+         resource.data.status == 'active');
+      allow delete: if isAdmin() || isManager();
+    }
+
+    // Maintenance Records Collection
+    match /maintenance/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin() || isManager();
+      allow update: if isAdmin() || isManager() ||
+        (isDriver() && resource.data.assignedTo == request.auth.uid);
+      allow delete: if isAdmin() || isManager();
+    }
+
+    // Driver Stats Collection
+    match /driverStats/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() || isManager() || isUserOwner(userId);
+      allow delete: if isAdmin();
+    }
+  }
+}
