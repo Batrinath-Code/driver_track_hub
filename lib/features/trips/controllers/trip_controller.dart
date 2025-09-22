@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:driver_tracker_app/data/models/trip_model.dart';
@@ -99,6 +100,11 @@ class TripController extends GetxController {
     );
   }
 
+  /*  inside TripController  */
+  Future<void> loadOnGoingTrip(String driverId) async {
+    onGoingTrip.value = await _tripRepo.getOnGoingTrip(driverId);
+  }
+
   Future<void> _loadOnGoingTrip() async {
     final user = authCtrl.firebaseUser.value;
     if (user == null) return;
@@ -134,6 +140,29 @@ class TripController extends GetxController {
   Future<void> endTrip(String tripId, {int? endOdo}) async {
     await _tripRepo.endTrip(tripId, endOdo: endOdo);
     await _loadOnGoingTrip();
+  }
+
+  /*  ----------  NEW HELPER  ----------  */
+  Future<void> freeVehicleAndDriver({
+    required String vehicleId,
+    required String driverId,
+  }) async {
+    final fire = FirebaseFirestore.instance;
+    return fire.runTransaction((tx) async {
+      final now = FieldValue.serverTimestamp();
+
+      tx.update(fire.collection('vehicles').doc(vehicleId), {
+        'status': 'idle',
+        'currentDriverId': FieldValue.delete(),
+        'lastUpdated': now,
+      });
+
+      tx.update(fire.collection('users').doc(driverId), {
+        'assignedVehicleId': FieldValue.delete(),
+        'status': 'active',
+        'lastUpdated': now,
+      });
+    });
   }
 
   Future<void> finishTripAndMaintenance({

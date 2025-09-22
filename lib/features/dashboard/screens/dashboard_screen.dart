@@ -360,11 +360,7 @@ class DashboardScreen extends StatelessWidget {
   void _showEndDialog(BuildContext context) async {
     final odoCtrl = TextEditingController();
     final onGoing = tripCtrl.onGoingTrip.value;
-
-    if (onGoing == null) {
-      Get.snackbar('Error', 'No on-going trip');
-      return;
-    }
+    if (onGoing == null) return;
 
     final ok = await Get.defaultDialog<bool>(
       title: 'End Trip',
@@ -387,13 +383,16 @@ class DashboardScreen extends StatelessWidget {
     );
 
     if (ok == true) {
-      await tripCtrl.finishTripAndMaintenance(
-        tripId: onGoing.id,
+      /* 1.  finish trip only  */
+      await tripCtrl.endTrip(onGoing.id, endOdo: int.tryParse(odoCtrl.text));
+      /* 2.  free vehicle & driver  */
+      await tripCtrl.freeVehicleAndDriver(
         vehicleId: onGoing.vehicleId,
         driverId: authCtrl.firebaseUser.value!.uid,
-        endOdo: int.tryParse(odoCtrl.text),
       );
-      Get.snackbar('Success', 'Trip ended & vehicle idle');
+      /* 3.  refresh UI  */
+      await tripCtrl.loadOnGoingTrip(authCtrl.firebaseUser.value!.uid);
+      Get.snackbar('Success', 'Trip ended. Vehicle is idle.');
       odoCtrl.dispose();
     }
   }
@@ -445,6 +444,7 @@ class DashboardScreen extends StatelessWidget {
           );
           // 2.  write issue doc (extra detail)
           await tripCtrl.reportIssue(issueCtrl.text.trim());
+          await tripCtrl.loadOnGoingTrip(authCtrl.firebaseUser.value!.uid);
           Get.snackbar(
             'Done',
             'Issue reported & trip finished. Vehicle under maintenance.',
@@ -452,6 +452,7 @@ class DashboardScreen extends StatelessWidget {
         } else {
           // driver not on trip – simple report only
           await tripCtrl.reportIssue(issueCtrl.text.trim());
+
           Get.snackbar('Done', 'Issue reported.');
         }
         odoCtrl.dispose();

@@ -19,6 +19,7 @@ class TripRepository {
     return _trips
         .where('date', isEqualTo: dateStr)
         .orderBy('startTime', descending: true)
+        .orderBy(FieldPath.documentId, descending: true)
         .snapshots()
         .map(
           (snap) => snap.docs
@@ -128,6 +129,29 @@ class TripRepository {
       });
 
       return tripRef.id;
+    });
+  }
+
+  // inside TripRepository
+  Future<void> freeVehicleAndDriver({
+    required String vehicleId,
+    required String driverId,
+  }) async {
+    final fire = FirebaseFirestore.instance;
+    return fire.runTransaction((tx) async {
+      final now = FieldValue.serverTimestamp();
+
+      tx.update(fire.collection('vehicles').doc(vehicleId), {
+        'status': 'idle',
+        'currentDriverId': FieldValue.delete(),
+        'lastUpdated': now,
+      });
+
+      tx.update(fire.collection('users').doc(driverId), {
+        'assignedVehicleId': FieldValue.delete(),
+        'status': 'active',
+        'lastUpdated': now,
+      });
     });
   }
 
