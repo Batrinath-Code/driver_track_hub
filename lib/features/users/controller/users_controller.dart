@@ -150,7 +150,7 @@ class UsersController extends GetxController {
     if (confirm == true) {
       try {
         isProcessing(true);
-        bool success = await _repository.deleteUser(uid);
+        bool success = await _repository.deleteUserCascade(uid);
         if (success) {
           // fetchUsers(); // Stream should update the list
           Get.snackbar(

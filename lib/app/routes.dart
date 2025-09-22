@@ -1,9 +1,11 @@
 // app/routes.dart (Example - adjust based on your actual screens)
 import 'package:driver_tracker_app/features/auth/screens/login_screen.dart'; // Keep Login
+import 'package:driver_tracker_app/features/dashboard/screens/dashboard_screen.dart';
+import 'package:driver_tracker_app/features/trips/controllers/trip_controller.dart';
 import 'package:driver_tracker_app/features/users/screen/users_screen.dart';
 import 'package:driver_tracker_app/features/vehicles/controllers/vehicles_controller.dart';
-// Import the single vehicles screen
 import 'package:driver_tracker_app/features/vehicles/screens/vehicles_screen.dart';
+import 'package:driver_tracker_app/data/models/models.dart';
 import 'package:get/get.dart';
 
 class AppRoutes {
@@ -11,7 +13,14 @@ class AppRoutes {
 
   static final routes = [
     GetPage(name: '/login', page: () => LoginScreen()),
-    // The single screen for vehicle listing/selection/management
+    GetPage(
+      name: '/dashboard',
+      page: () => DashboardScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(TripController());
+        Get.put(VehicleRepository());
+      }),
+    ),
     GetPage(
       name: '/vehicles',
       page: () => VehiclesScreen(),

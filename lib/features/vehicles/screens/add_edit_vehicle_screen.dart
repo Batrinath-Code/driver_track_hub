@@ -1,14 +1,14 @@
 // features/vehicles/screens/add_edit_vehicle_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:driver_tracker_app/data/models/vehicle_model.dart';
+import 'package:driver_tracker_app/data/models/models.dart';
 import 'package:driver_tracker_app/features/vehicles/controllers/vehicles_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // For Timestamp
 
 class AddEditVehicleScreen extends StatefulWidget {
   final Vehicle? vehicleToEdit; // Pass null for Add, pass a Vehicle for Edit
 
-  const AddEditVehicleScreen({Key? key, this.vehicleToEdit}) : super(key: key);
+  const AddEditVehicleScreen({super.key, this.vehicleToEdit});
 
   @override
   State<AddEditVehicleScreen> createState() => _AddEditVehicleScreenState();
@@ -84,10 +84,10 @@ class _AddEditVehicleScreenState extends State<AddEditVehicleScreen> {
 
       if (widget.vehicleToEdit == null) {
         // Add new vehicle
-        // _vehiclesController.createVehicle(vehicle);
+        _vehiclesController.createVehicle(vehicle);
       } else {
         // Update existing vehicle
-        // _vehiclesController.updateVehicle(vehicle);
+        _vehiclesController.updateVehicle(vehicle);
       }
 
       // Navigate back

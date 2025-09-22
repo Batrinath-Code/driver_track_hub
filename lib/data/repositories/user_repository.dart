@@ -6,7 +6,6 @@ import 'package:firebase_auth/firebase_auth.dart' as auth; // Alias
 import 'dart:developer' as developer;
 
 class UserRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final CollectionReference _usersCollection = FirebaseFirestore.instance
       .collection('users');
 
@@ -79,51 +78,35 @@ class UserRepository {
   }
 
   // Delete a user document
-  // Note: This doesn't delete the Firebase Auth user
-  Future<bool> deleteUser(String uid) async {
-    try {
-      await _usersCollection.doc(uid).delete();
-      developer.log("User document deleted with UID: $uid");
-      // Consider implications: what if user is assigned to a vehicle?
-      // The application logic should handle cleaning up related data (vehicle.currentDriverId etc.)
+  Future<bool> deleteUserCascade(String uid) async {
+    final fire = FirebaseFirestore.instance;
+    return fire.runTransaction((tx) async {
+      final userDoc = await tx.get(fire.collection('users').doc(uid));
+      if (!userDoc.exists) return false;
+
+      final avId = userDoc.data()?['assignedVehicleId'] as String?;
+      if (avId != null && avId.isNotEmpty) {
+        // remove driver from vehicle
+        tx.update(fire.collection('vehicles').doc(avId), {
+          'currentDriverId': FieldValue.delete(),
+          'status': 'idle',
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+      }
+      tx.delete(fire.collection('users').doc(uid));
       return true;
-    } on FirebaseException catch (e) {
-      developer.log("Firebase error deleting user '$uid': ${e.message}");
-      return false;
-    } catch (e) {
-      developer.log("Error deleting user '$uid': $e");
-      return false;
-    }
+    });
   }
 
-  // Helper: Check if a Firebase Auth user exists
   Future<bool> doesAuthUserExist(String email) async {
     try {
-      final auth.FirebaseAuth firebaseAuth = auth.FirebaseAuth.instance;
-      final List<auth.User> users = await firebaseAuth
-          .fetchSignInMethodsForEmail(email)
-          .then(
-            (methods) => methods.isNotEmpty
-                ? [auth.FirebaseAuth.instance.currentUser!]
-                : [],
-          );
-      // fetchSignInMethodsForEmail doesn't directly return User objects,
-      // it returns sign-in methods. Let's check if any user with that email exists.
-      // A more robust way might involve backend functions or checking if email is in use somehow.
-      // For now, a simple check: try to sign in anonymously and link, or see if email is used.
-      // This is tricky client-side. Better handled server-side.
-      // Let's simplify: Assume if we can get the user by email, it exists.
-      // Actually, FirebaseAuth doesn't have a direct 'getUserByEmail' for clients.
-      // We'll assume existence check is done elsewhere or during auth creation.
-      // Returning true for now as a placeholder, or assume it's checked before calling createUser.
-      // A real implementation might need a Cloud Function.
-      developer.log(
-        "Checking auth user existence for '$email' is complex client-side. Assuming check is done elsewhere.",
-      );
-      return true; // Placeholder
+      final methods = await auth.FirebaseAuth.instance
+          .fetchSignInMethodsForEmail(email);
+      return methods.isNotEmpty; // true = email already registered
     } catch (e) {
+      // If email is malformed or other error, treat as non-existent
       developer.log("Error checking auth user existence for '$email': $e");
-      return false; // Assume doesn't exist if error
+      return false;
     }
   }
 }

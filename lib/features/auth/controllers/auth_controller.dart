@@ -1,5 +1,4 @@
-// features/auth/controllers/auth_controller.dart (Relevant parts modified/checked)
-
+// features/auth/controllers/auth_controller.dart
 import 'dart:developer' as developer; // Import for developer.log
 import 'package:driver_tracker_app/features/vehicles/controllers/vehicles_controller.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -133,7 +132,7 @@ class AuthController extends GetxController {
   void _navigateBasedOnRole(String role) {
     developer.log("AuthController: Navigating based on role: '$role'");
     Future.microtask(() {
-      Get.offAllNamed('/vehicles');
+      Get.offAllNamed('/dashboard');
     });
   }
 
