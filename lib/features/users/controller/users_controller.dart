@@ -104,30 +104,29 @@ class UsersController extends GetxController {
   Future<void> updateUser(local.User updatedUser) async {
     try {
       isProcessing(true);
-      bool success = await _repository.updateUser(updatedUser);
+      final success = await _repository.updateUser(updatedUser);
       if (success) {
-        // fetchUsers(); // Stream should update the list
+        /* 1.  fire event  */
         Get.snackbar(
-          "Success",
-          "User updated successfully.",
-          backgroundColor: Get.theme.colorScheme.primary,
-          colorText: Get.theme.colorScheme.onPrimary,
+          'Success',
+          'User updated successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
         );
       } else {
         Get.snackbar(
-          "Error",
-          "Failed to update user.",
-          backgroundColor: Get.theme.colorScheme.error,
-          colorText: Get.theme.colorScheme.onError,
+          'Error',
+          'Failed to update user',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
         );
       }
     } catch (e) {
-      developer.log("Controller error updating user: $e");
       Get.snackbar(
-        "Error",
-        "Failed to update user: $e",
-        backgroundColor: Get.theme.colorScheme.error,
-        colorText: Get.theme.colorScheme.onError,
+        'Error',
+        'Failed to update user: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
       );
     } finally {
       isProcessing(false);

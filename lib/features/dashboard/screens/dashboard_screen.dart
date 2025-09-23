@@ -116,6 +116,15 @@ class DashboardScreen extends StatelessWidget {
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          if (authCtrl.userRole.value == 'admin' ||
+              authCtrl.userRole.value == 'manager')
+            FloatingActionButton(
+              heroTag: 'issues',
+              tooltip: 'Reported Issues',
+              onPressed: () => Get.toNamed('/issues'),
+              child: const Icon(Icons.report),
+            ),
+          const SizedBox(height: 10),
           if (authCtrl.userRole.value == 'admin')
             FloatingActionButton(
               heroTag: 'users',
@@ -141,10 +150,7 @@ class DashboardScreen extends StatelessWidget {
             FloatingActionButton(
               heroTag: 'addVehicle',
               tooltip: 'Add Vehicle',
-              onPressed: () {
-                Get.put(VehicleRepository());
-                Get.to(() => const AddEditVehicleScreen());
-              },
+              onPressed: () => Get.toNamed('/add-edit-vehicle'),
               child: const Icon(Icons.add),
             ),
         ],
